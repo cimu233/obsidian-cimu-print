@@ -20,12 +20,10 @@ export async function generatePrintStyles(
 
 function layoutCss(settings: CimuPrintSettings): string {
   const orientation = settings.landscape ? ' landscape' : '';
-  const scale = Math.max(25, Math.min(200, settings.printScalePercent)) / 100;
   return `
 @page { size: ${settings.pageSize}${orientation}; margin: ${settings.pageMarginMm}mm; }
 @media print {
   html, body { margin: 0; background: white; }
-  .cimu-print-document { zoom: ${scale}; }
   .cimu-print-page-break { break-before: page; }
 }
 `;

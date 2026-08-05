@@ -40,4 +40,17 @@ describe('generatePrintStyles', () => {
 
     expect(css).toContain('color: rebeccapurple');
   });
+
+  it('leaves content unscaled so PDF output owns the scale factor', async () => {
+    const app = createApp([]);
+
+    const css = await generatePrintStyles(
+      app as never,
+      { id: 'cimu-print', dir: '.obsidian/plugins/cimu-print' } as never,
+      { ...DEFAULT_SETTINGS, printScalePercent: 75 }
+    );
+
+    expect(css).toContain('@page { size: A4');
+    expect(css).not.toContain('zoom:');
+  });
 });

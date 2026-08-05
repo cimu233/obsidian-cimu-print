@@ -64,20 +64,26 @@ export async function createPrintPdfData(
         );
         await waitForPrintAssets(printWindow);
 
-        return await printWindow.webContents.printToPDF({
-            landscape: settings.landscape,
-            printBackground: true,
-            pageSize: settings.pageSize,
-            preferCSSPageSize: true,
-            scale: 1,
-            generateTaggedPDF: true,
-            generateDocumentOutline: true
-        });
+        return await printWindow.webContents.printToPDF(buildPrintToPdfOptions(settings));
     } finally {
         if (!printWindow.isDestroyed?.()) {
             printWindow.close();
         }
     }
+}
+
+export function buildPrintToPdfOptions(settings: CimuPrintSettings): Record<string, unknown> {
+    const scaleFactor = Math.max(10, Math.min(200, settings.printScalePercent));
+    return {
+        landscape: settings.landscape,
+        printBackground: true,
+        pageSize: settings.pageSize,
+        preferCSSPageSize: true,
+        scaleFactor,
+        scale: scaleFactor / 100,
+        generateTaggedPDF: true,
+        generateDocumentOutline: true
+    };
 }
 
 export function countPdfPages(pdfData: Uint8Array): number {
