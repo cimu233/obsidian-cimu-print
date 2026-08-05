@@ -58,10 +58,11 @@ async function readPluginStyles(app: App, manifest: PluginManifest): Promise<str
 
 async function readUserSnippet(app: App): Promise<string> {
   const customCss = (app as App & { customCss?: unknown }).customCss as {
-    enabledSnippets?: Set<string>;
-    snippets?: Set<string>;
+    enabledSnippets?: unknown;
+    snippets?: unknown;
   } | undefined;
-  if (!customCss?.enabledSnippets?.has('print') && !customCss?.snippets?.has('print')) {
+  if (!containsSnippet(customCss?.enabledSnippets, 'print')
+    && !containsSnippet(customCss?.snippets, 'print')) {
     return '';
   }
   try {
@@ -69,4 +70,30 @@ async function readUserSnippet(app: App): Promise<string> {
   } catch {
     return '';
   }
+}
+
+function containsSnippet(collection: unknown, name: string): boolean {
+  if (collection instanceof Set) {
+    return collection.has(name);
+  }
+  if (Array.isArray(collection)) {
+    return collection.includes(name);
+  }
+  if (collection && typeof collection === 'object') {
+    const candidate = collection as {
+      has?: (value: string) => boolean;
+      includes?: (value: string) => boolean;
+      [Symbol.iterator]?: () => Iterator<unknown>;
+    };
+    if (typeof candidate.has === 'function') {
+      return candidate.has(name);
+    }
+    if (typeof candidate.includes === 'function') {
+      return candidate.includes(name);
+    }
+    if (typeof candidate[Symbol.iterator] === 'function') {
+      return Array.from(candidate as Iterable<unknown>).includes(name);
+    }
+  }
+  return false;
 }
