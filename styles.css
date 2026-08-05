@@ -1,0 +1,247 @@
+.cimu-print-center-modal {
+  --cp-border: color-mix(in srgb, var(--background-modifier-border) 82%, transparent);
+  --cp-panel: color-mix(in srgb, var(--background-secondary) 90%, var(--background-primary));
+  width: min(1240px, 96vw);
+  height: min(880px, 92vh);
+  max-width: none;
+}
+
+.cimu-print-center-modal .modal-content {
+  height: 100%;
+  padding: 0;
+}
+
+.cimu-print-center {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100%;
+  min-height: 0;
+}
+
+.cimu-print-center-header,
+.cimu-print-center-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--cp-border);
+}
+
+.cimu-print-center-footer {
+  justify-content: flex-end;
+  border-top: 1px solid var(--cp-border);
+  border-bottom: 0;
+}
+
+.cimu-print-center-heading-group {
+  min-width: 0;
+}
+
+.cimu-print-center-heading-group h2 {
+  margin: 0 0 3px;
+  font-size: 18px;
+}
+
+.cimu-print-center-filename,
+.cimu-print-center-status,
+.cimu-print-center-option-description,
+.cimu-print-center-output-hint {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.cimu-print-center-filename {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cimu-print-center-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.cimu-print-center-body {
+  display: grid;
+  grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
+  min-height: 0;
+}
+
+.cimu-print-center-options {
+  overflow: auto;
+  padding: 12px 14px 24px;
+  background: var(--cp-panel);
+  border-right: 1px solid var(--cp-border);
+}
+
+.cimu-print-center-section {
+  margin: 18px 0 8px;
+  font-size: 12px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cimu-print-center-option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(96px, 44%);
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--cp-border) 55%, transparent);
+}
+
+.cimu-print-center-option-name {
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.cimu-print-center-option select,
+.cimu-print-center-text-input,
+.cimu-print-center-number-input,
+.cimu-print-center-font-input {
+  width: 100%;
+}
+
+.cimu-print-center-range {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px;
+  align-items: center;
+  gap: 7px;
+}
+
+.cimu-print-center-preview {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  background: #d7d8dc;
+}
+
+.cimu-print-center-preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 38px;
+  padding: 7px 12px;
+  color: var(--text-normal);
+  background: var(--background-primary);
+  border-bottom: 1px solid var(--cp-border);
+}
+
+.cimu-print-center-frame {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  background: #d7d8dc;
+}
+
+.cimu-print-capability-row.is-unavailable {
+  opacity: .55;
+}
+
+.cimu-print-setting-suffix {
+  min-width: 28px;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.cimu-print-frontmatter {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border: 1px solid #d8dce3;
+  border-radius: 8px;
+  background: #f7f8fa;
+  color: #24272d;
+}
+
+.cimu-print-frontmatter-heading {
+  margin-bottom: 8px;
+  font-weight: 650;
+}
+
+.cimu-print-frontmatter-property,
+.cimu-print-frontmatter-object-row {
+  display: grid;
+  grid-template-columns: minmax(90px, 135px) minmax(0, 1fr);
+  gap: 12px;
+  padding: 5px 0;
+}
+
+.cimu-print-frontmatter-key,
+.cimu-print-frontmatter-object-key {
+  color: #5d6470;
+  font-weight: 550;
+}
+
+.cimu-print-frontmatter-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.cimu-print-frontmatter-chip {
+  padding: 2px 7px;
+  border: 1px solid #d0d5dd;
+  border-radius: 999px;
+  background: white;
+}
+
+.cimu-print-frontmatter-object {
+  margin: 0;
+}
+
+.cimu-print-frontmatter-object-value {
+  margin: 0;
+}
+
+.cimu-print-frontmatter-boolean-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+}
+
+.cimu-print-frontmatter-boolean.is-checked .cimu-print-frontmatter-boolean-indicator {
+  background: currentColor;
+}
+
+@media (max-width: 760px) {
+  .cimu-print-center-body {
+    grid-template-columns: 1fr;
+  }
+  .cimu-print-center-options {
+    max-height: 42vh;
+    border-right: 0;
+    border-bottom: 1px solid var(--cp-border);
+  }
+}
+
+@media print {
+  html,
+  body,
+  .cimu-print-document {
+    color-scheme: light;
+    background: white;
+  }
+  .cimu-print-document img,
+  .cimu-print-document svg,
+  .cimu-print-document canvas {
+    max-width: 100%;
+    height: auto;
+  }
+  .cimu-print-document table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .cimu-print-document pre,
+  .cimu-print-document blockquote,
+  .cimu-print-document table,
+  .cimu-print-document .callout {
+    break-inside: avoid;
+  }
+}

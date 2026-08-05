@@ -1,0 +1,9 @@
+{
+  "id": "cimu-print",
+  "name": "Cimu Print",
+  "version": "1.0.0",
+  "isDesktopOnly": true,
+  "minAppVersion": "1.6.0",
+  "description": "Preview, export, and print paginated notes through system printer capabilities.",
+  "author": "Cimu Lumi"
+}
