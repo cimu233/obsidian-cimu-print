@@ -23,7 +23,7 @@ const production = process.argv[2] === 'production';
 const context = await esbuild.context({
   entryPoints: ['src/main.ts'],
   bundle: true,
-  external: ['obsidian', 'electron', '@codemirror/state', '@codemirror/view', ...builtins],
+  external: ['obsidian', 'electron', '@codemirror/state', '@codemirror/view', 'node:*', ...builtins],
   format: 'cjs',
   target: 'es2018',
   platform: 'browser',

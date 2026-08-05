@@ -1,4 +1,14 @@
-import { MarkdownView, Notice, Plugin, TFile, TFolder } from 'obsidian';
+import { join } from 'node:path';
+import { MarkdownView, normalizePath, Notice, Plugin, TFile, TFolder } from 'obsidian';
+import { LocalCliServer, startLocalCliServer } from './cli/localServer';
+import {
+  CliPrintRequest,
+  CliPrintResult,
+  cliStyleToPrintStyle,
+  inferCliDuplexMode,
+  printStyleToCliStyle,
+  resolveCliDuplexOption
+} from './cli/protocol';
 import { resolveActiveNoteFolder } from './content/activeFolder';
 import { renderMarkdownSource } from './content/markdownSource';
 import { readNoteAppearanceClasses } from './content/noteAppearance';
@@ -10,6 +20,12 @@ import { executePrintJob } from './printing/printJob';
 import { exportPrintPdf } from './printing/exportPdf';
 import { generatePrintStyles } from './printing/printStyles';
 import { installNativePdfFilenameHook } from './printing/nativePdfFilename';
+import {
+  getSystemPrinterCapabilities,
+  listSystemPrinters,
+  supportsDirectSystemPrint,
+  SystemPrinterOption
+} from './printing/systemPrinters';
 import { CimuPrintSettings, DEFAULT_SETTINGS, DocumentTitleSource } from './types';
 import { PrintCenterDocument, PrintCenterModal } from './ui/printCenter';
 import { CimuPrintSettingTab } from './ui/settings';
@@ -33,6 +49,8 @@ interface FileView {
 export default class CimuPrintPlugin extends Plugin {
   settings: CimuPrintSettings = { ...DEFAULT_SETTINGS, temporaryPrintPdfPaths: [] };
   private removeNativeDialogHook: (() => void) | null = null;
+  private localCliServer: LocalCliServer | null = null;
+  private cliPrintQueue: Promise<void> = Promise.resolve();
 
   async onload(): Promise<void> {
     const stored = await this.loadData() as Partial<CimuPrintSettings> | null;
@@ -50,6 +68,7 @@ export default class CimuPrintPlugin extends Plugin {
     this.addSettingTab(new CimuPrintSettingTab(this.app, this));
     this.addRibbonIcon('printer', t('command.printNote'), () => void this.printCurrentNote());
     this.removeNativeDialogHook = installNativePdfFilenameHook(this.app, () => this.settings);
+    await this.startLocalCli();
 
     if (migration.hotkeysMoved > 0) {
       console.info(`Cimu Print migrated ${migration.hotkeysMoved} shortcut entries.`);
@@ -59,6 +78,11 @@ export default class CimuPrintPlugin extends Plugin {
   onunload(): void {
     this.removeNativeDialogHook?.();
     this.removeNativeDialogHook = null;
+    const server = this.localCliServer;
+    this.localCliServer = null;
+    void server?.stop().catch((error) => {
+      console.warn('Cimu Print local CLI shutdown failed:', error);
+    });
   }
 
   async saveSettings(): Promise<void> {
@@ -200,7 +224,11 @@ export default class CimuPrintPlugin extends Plugin {
     ).open();
   }
 
-  private async createFileContent(file: TFile, markdown = ''): Promise<PrintableContent | null> {
+  private async createFileContent(
+    file: TFile,
+    markdown = '',
+    settings: CimuPrintSettings = this.settings
+  ): Promise<PrintableContent | null> {
     if (file.extension !== 'md') {
       const view = this.activeFileView();
       if (!view || view.file !== file) {
@@ -210,22 +238,22 @@ export default class CimuPrintPlugin extends Plugin {
       const content = capturePrintableView(
         view,
         [],
-        this.settings.printTitle ? file.basename : undefined
+        settings.printTitle ? file.basename : undefined
       );
       return content ? { content } : null;
     }
 
     const source = markdown || await this.readMarkdown(file);
-    const title = this.settings.printTitle
-      ? this.titleFor(source, file, this.settings.printedTitleSource)
+    const title = settings.printTitle
+      ? this.titleFor(source, file, settings.printedTitleSource)
       : false;
     const content = await renderMarkdownSource(
       file,
       title,
       this.app,
-      this.settings.printFrontmatter
+      settings.printFrontmatter
     );
-    return content ? { content, bodyClasses: this.attachNoteClasses(content, file) } : null;
+    return content ? { content, bodyClasses: this.attachNoteClasses(content, file, settings) } : null;
   }
 
   private async createFolderContent(files: TFile[]): Promise<HTMLElement> {
@@ -243,8 +271,12 @@ export default class CimuPrintPlugin extends Plugin {
     return container;
   }
 
-  private attachNoteClasses(content: HTMLElement, file?: TFile | null): string[] {
-    if (!this.settings.inheritNoteCssClasses || !file) {
+  private attachNoteClasses(
+    content: HTMLElement,
+    file?: TFile | null,
+    settings: CimuPrintSettings = this.settings
+  ): string[] {
+    if (!settings.inheritNoteCssClasses || !file) {
       return [];
     }
     const classes = readNoteAppearanceClasses(this.app, file);
@@ -299,6 +331,150 @@ export default class CimuPrintPlugin extends Plugin {
     return titleSorter.compare(left.basename, right.basename)
       || titleSorter.compare(left.path, right.path);
   }
+
+  private async startLocalCli(): Promise<void> {
+    const adapter = this.app.vault.adapter as typeof this.app.vault.adapter & {
+      getBasePath?: () => string;
+    };
+    const vaultPath = adapter.getBasePath?.();
+    if (!vaultPath) {
+      console.warn('Cimu Print local CLI requires a filesystem-backed vault.');
+      return;
+    }
+
+    const pluginDirectory = join(
+      vaultPath,
+      this.manifest.dir ?? `${this.app.vault.configDir}/plugins/${this.manifest.id}`
+    );
+    try {
+      this.localCliServer = await startLocalCliServer(
+        pluginDirectory,
+        vaultPath,
+        this.manifest.version,
+        {
+          listPrinters: () => listSystemPrinters(),
+          print: (request) => this.enqueueCliPrint(request)
+        }
+      );
+      console.info(`Cimu Print local CLI ready at ${this.localCliServer.descriptorPath}`);
+    } catch (error) {
+      console.warn('Cimu Print local CLI startup failed:', error);
+    }
+  }
+
+  private enqueueCliPrint(request: CliPrintRequest): Promise<CliPrintResult> {
+    const queued = this.cliPrintQueue.then(
+      () => this.executeCliPrint(request),
+      () => this.executeCliPrint(request)
+    );
+    this.cliPrintQueue = queued.then(() => undefined, () => undefined);
+    return queued;
+  }
+
+  private async executeCliPrint(request: CliPrintRequest): Promise<CliPrintResult> {
+    if (!supportsDirectSystemPrint()) {
+      throw new Error('Direct CLI printing currently requires the CUPS print service on macOS or Linux.');
+    }
+
+    const filePath = normalizeVaultFilePath(request.file);
+    const file = this.app.vault.getAbstractFileByPath(filePath);
+    if (!(file instanceof TFile) || file.extension !== 'md') {
+      throw new Error(`Markdown file not found in this vault: ${filePath}`);
+    }
+
+    const style = request.style ?? printStyleToCliStyle(this.settings.printStyleMode);
+    const printSettings: CimuPrintSettings = {
+      ...this.settings,
+      printScalePercent: request.scale ?? this.settings.printScalePercent,
+      printStyleMode: cliStyleToPrintStyle(style)
+    };
+    const markdown = await this.readMarkdown(file);
+    const printable = await this.createFileContent(file, markdown, printSettings);
+    if (!printable) {
+      throw new Error(`Could not render Markdown file: ${filePath}`);
+    }
+
+    const printers = await listSystemPrinters();
+    const printer = printers.find((item) => item.name === request.printer)
+      ?? printers.find((item) => item.name === this.settings.printerName)
+      ?? printers.find((item) => item.isDefault)
+      ?? printers[0];
+    if (!printer) {
+      throw new Error('No system printer is available.');
+    }
+    if (request.printer && printer.name !== request.printer) {
+      throw new Error(`System printer not found: ${request.printer}`);
+    }
+
+    const capabilities = await getSystemPrinterCapabilities(printer.name);
+    const duplex = resolveCliDuplexOption(
+      capabilities.duplexModes,
+      request.duplex,
+      this.settings.printDuplex
+    );
+    if (request.duplex && capabilities.duplexModes.length > 0 && !duplex) {
+      throw new Error(`Printer ${printer.name} does not report support for ${request.duplex}.`);
+    }
+    if (request.duplex !== undefined && request.duplex !== 'single'
+      && capabilities.duplexModes.length === 0) {
+      throw new Error(`Printer ${printer.name} does not report two-sided capabilities.`);
+    }
+
+    const paperSize = findPrinterOption(capabilities.paperSizes, printSettings.pageSize);
+    if (capabilities.paperSizes.length > 0 && !paperSize) {
+      throw new Error(`Printer ${printer.name} does not report support for ${printSettings.pageSize}.`);
+    }
+
+    const title = sanitizePdfFilename(
+      this.titleFor(markdown, file, printSettings.pdfFilenameSource),
+      file.basename
+    );
+    const css = await generatePrintStyles(this.app, this.manifest, printSettings);
+    const submitted = await executePrintJob(
+      title,
+      printable.content,
+      printSettings,
+      css,
+      {
+        printerName: printer.name,
+        copies: request.copies ?? this.settings.printCopies,
+        pageRanges: request.pages ?? '',
+        paperSize,
+        duplex,
+        color: findPrinterOption(capabilities.colorModes, this.settings.printColor),
+        quality: findPrinterOption(capabilities.qualities, this.settings.printQuality),
+        mediaType: findPrinterOption(capabilities.mediaTypes, this.settings.printMediaType)
+      },
+      printable.bodyClasses
+    );
+
+    return {
+      submitted,
+      file: filePath,
+      printer: printer.name,
+      duplex: request.duplex ?? inferCliDuplexMode(duplex),
+      scale: printSettings.printScalePercent,
+      style
+    };
+  }
+}
+
+function normalizeVaultFilePath(value: string): string {
+  const trimmed = value.trim().replace(/\\/g, '/');
+  if (!trimmed || trimmed.startsWith('/') || /^[a-zA-Z]:\//.test(trimmed)
+    || trimmed.split('/').includes('..')) {
+    throw new Error('The CLI file path must be a vault-relative Markdown path.');
+  }
+  return normalizePath(trimmed);
+}
+
+function findPrinterOption(
+  options: SystemPrinterOption[],
+  value: string
+): SystemPrinterOption | undefined {
+  const normalized = value.toLowerCase();
+  return options.find((option) => option.value.toLowerCase() === normalized)
+    ?? options.find((option) => option.label.toLowerCase() === normalized);
 }
 
 function mergeSettings(stored: Partial<CimuPrintSettings> | null): CimuPrintSettings {
