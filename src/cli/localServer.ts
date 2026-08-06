@@ -140,8 +140,12 @@ function closeServer(server: Server): Promise<void> {
 async function readJsonBody(request: IncomingMessage): Promise<unknown> {
   const chunks: Buffer[] = [];
   let size = 0;
-  for await (const chunk of request) {
-    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+  for await (const rawChunk of request) {
+    const chunk: unknown = rawChunk;
+    if (typeof chunk !== 'string' && !Buffer.isBuffer(chunk)) {
+      throw new TypeError('The local CLI received an unsupported request body.');
+    }
+    const buffer = Buffer.from(chunk);
     size += buffer.length;
     if (size > 64 * 1024) {
       throw new RangeError('Local CLI request is too large.');

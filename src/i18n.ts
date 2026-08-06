@@ -1,3 +1,4 @@
+import { getLanguage } from 'obsidian';
 import { PrintLanguage } from './types';
 
 const EN = {
@@ -197,8 +198,8 @@ export function getPrintLanguage(preference = languagePreference): Exclude<Print
     }
 
     const candidates = [
+        getLanguage(),
         document.documentElement.lang,
-        safeLocalStorageLanguage(),
         navigator.language
     ];
 
@@ -239,12 +240,4 @@ function normalizeLanguage(value: string | null | undefined): Exclude<PrintLangu
         return 'en';
     }
     return null;
-}
-
-function safeLocalStorageLanguage(): string | null {
-    try {
-        return window.localStorage?.getItem('language') ?? null;
-    } catch (error) {
-        return null;
-    }
 }

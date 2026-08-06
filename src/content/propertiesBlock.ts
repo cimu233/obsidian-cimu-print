@@ -88,7 +88,7 @@ function appendArray(parent: HTMLElement, values: unknown[]): void {
 
     const list = element('ul', `${ROOT_CLASS}-list`);
     for (const value of values) {
-        const item = document.createElement('li');
+        const item = createEl('li');
         appendValue(item, value);
         list.appendChild(item);
     }
@@ -128,7 +128,7 @@ function inlineValue(value: string | number | boolean): HTMLElement {
 function scalarValue(value: string | number): HTMLElement {
     const text = String(value);
     if (/^(?:https?:\/\/|mailto:)/i.test(text)) {
-        const link = element('a', `${ROOT_CLASS}-link`, text) as HTMLAnchorElement;
+        const link = element('a', `${ROOT_CLASS}-link`, text);
         link.href = text;
         return link;
     }
@@ -153,7 +153,7 @@ function element<K extends keyof HTMLElementTagNameMap>(
     className: string,
     text?: string
 ): HTMLElementTagNameMap[K] {
-    const node = document.createElement(tag);
+    const node = createEl(tag);
     node.className = className;
     if (text !== undefined) {
         node.textContent = text;

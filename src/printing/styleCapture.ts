@@ -109,24 +109,21 @@ body.${PRINT_BODY_CLASS} :where(code,pre) {
 
 export function createDebugPrintHtml(
   content: HTMLElement,
-  css: string,
   title = 'Cimu Print',
   bodyClasses: string[] = [],
   includeThemeClasses = true
 ): string {
-  const html = document.createElement('html');
+  const html = createEl('html');
   html.className = includeThemeClasses ? toLightThemeClassName(document.documentElement.className) : '';
 
-  const head = document.createElement('head');
-  const charset = document.createElement('meta');
+  const head = createEl('head');
+  const charset = createEl('meta');
   charset.setAttribute('charset', 'utf-8');
-  const titleNode = document.createElement('title');
+  const titleNode = createEl('title');
   titleNode.textContent = title;
-  const style = document.createElement('style');
-  style.textContent = css;
-  head.append(charset, titleNode, style);
+  head.append(charset, titleNode);
 
-  const body = document.createElement('body');
+  const body = createEl('body');
   applyPrintBodyClasses(body, includeThemeClasses);
   body.classList.add(...bodyClasses);
   const clone = content.cloneNode(true) as HTMLElement;
@@ -164,8 +161,8 @@ function collectRules(
   variables: Set<string>
 ): void {
   for (const rule of Array.from(rules)) {
-    if (rule.type === CSSRule.STYLE_RULE) {
-      const styleRule = rule as CSSStyleRule;
+    if (isStyleRule(rule)) {
+      const styleRule = rule;
       const selectors = splitSelectorList(styleRule.selectorText)
         .filter((selector) => matchesPrintedContent(selector, root, matchContext));
       if (selectors.length > 0) {
@@ -176,8 +173,8 @@ function collectRules(
       continue;
     }
 
-    if (rule.type === CSSRule.IMPORT_RULE) {
-      const importRule = rule as CSSImportRule;
+    if (isImportRule(rule)) {
+      const importRule = rule;
       if (importRule.styleSheet) {
         collectStyleSheet(importRule.styleSheet, root, matchContext, output, seen, variables);
       }
@@ -201,6 +198,14 @@ function collectRules(
       addRule(`${prelude} {\n${nested.join('\n')}\n}`, output, seen);
     }
   }
+}
+
+function isStyleRule(rule: CSSRule): rule is CSSStyleRule {
+  return 'selectorText' in rule && 'style' in rule;
+}
+
+function isImportRule(rule: CSSRule): rule is CSSImportRule {
+  return 'href' in rule && 'styleSheet' in rule;
 }
 
 function splitSelectorList(selectorText: string): string[] {

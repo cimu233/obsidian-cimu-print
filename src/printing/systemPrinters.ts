@@ -161,7 +161,7 @@ export function supportsDirectSystemPrint(): boolean {
     try {
         const { platform } = getCommandRuntime();
         return platform === 'darwin' || platform === 'linux';
-    } catch (error) {
+    } catch {
         return false;
     }
 }

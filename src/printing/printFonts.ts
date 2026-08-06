@@ -14,8 +14,12 @@ export const PRINT_FONT_SUGGESTIONS = [
 ] as const;
 
 export function serializePrintFontFamily(value: string): string {
-    const normalized = value
-        .replace(/[\u0000-\u001f\u007f;{}]/g, '')
+    const normalized = Array.from(value)
+        .filter((character) => {
+            const codePoint = character.codePointAt(0) ?? 0;
+            return codePoint > 0x1f && codePoint !== 0x7f && !';{}'.includes(character);
+        })
+        .join('')
         .trim();
 
     if (!normalized) {

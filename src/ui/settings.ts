@@ -90,7 +90,7 @@ export class CimuPrintSettingTab extends PluginSettingTab {
   }
 
   private heading(root: HTMLElement, label: string): void {
-    root.createEl('h3', { text: label });
+    new Setting(root).setName(label).setHeading();
   }
 
   private toggle<K extends BooleanKey>(
@@ -118,7 +118,9 @@ export class CimuPrintSettingTab extends PluginSettingTab {
     after?: (value: string) => void | Promise<void>
   ): void {
     new Setting(root).setName(name).setDesc(description).addDropdown((control) => {
-      Object.entries(options).forEach(([value, label]) => control.addOption(value, label));
+      Object.entries(options).forEach(([value, label]) => {
+        control.addOption(value, label);
+      });
       control.setValue(String(this.owner.settings[key]));
       control.onChange(async (value) => {
         this.owner.settings[key] = value as CimuPrintSettings[K];
@@ -151,7 +153,6 @@ export class CimuPrintSettingTab extends PluginSettingTab {
     setting.addSlider((control) => control
       .setLimits(minimum, maximum, step)
       .setValue(this.owner.settings[key])
-      .setDynamicTooltip()
       .onChange((value) => void this.storeNumber(key, value, minimum, maximum)));
     setting.addText((control) => {
       control.inputEl.type = 'number';
@@ -175,7 +176,7 @@ export class CimuPrintSettingTab extends PluginSettingTab {
     minimum: number,
     maximum: number
   ): Promise<void> {
-    this.owner.settings[key] = Math.max(minimum, Math.min(maximum, value)) as CimuPrintSettings[K];
+    this.owner.settings[key] = Math.max(minimum, Math.min(maximum, value));
     await this.owner.saveSettings();
   }
 

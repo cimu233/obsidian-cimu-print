@@ -116,7 +116,7 @@ async function renderPages(
     for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber += 1) {
         const page = await pdfDocument.getPage(pageNumber);
         const viewport = page.getViewport({ scale });
-        const canvas = document.createElement('canvas');
+        const canvas = createEl('canvas');
         canvas.width = Math.max(1, Math.ceil(viewport.width));
         canvas.height = Math.max(1, Math.ceil(viewport.height));
         const context = canvas.getContext('2d', { alpha: false });

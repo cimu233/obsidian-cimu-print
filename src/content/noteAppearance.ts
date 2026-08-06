@@ -5,9 +5,7 @@ export function readNoteAppearanceClasses(app: App, file?: TFile | null): string
         return [];
     }
 
-    const metadata = app.metadataCache.getFileCache(file)?.frontmatter as
-        | Record<string, unknown>
-        | undefined;
+    const metadata = app.metadataCache.getFileCache(file)?.frontmatter;
     const collected: string[] = [];
     collectClassNames(metadata?.cssclasses ?? metadata?.cssClasses, collected);
     return [...new Set(collected)];

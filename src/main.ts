@@ -55,7 +55,7 @@ export default class CimuPrintPlugin extends Plugin {
   async onload(): Promise<void> {
     const stored = await this.loadData() as Partial<CimuPrintSettings> | null;
     this.settings = mergeSettings(stored);
-    const migration = await migrateLegacyPrintState(
+    await migrateLegacyPrintState(
       this.app,
       this.settings,
       !stored || Object.keys(stored).length === 0
@@ -70,9 +70,6 @@ export default class CimuPrintPlugin extends Plugin {
     this.removeNativeDialogHook = installNativePdfFilenameHook(this.app, () => this.settings);
     await this.startLocalCli();
 
-    if (migration.hotkeysMoved > 0) {
-      console.info(`Cimu Print migrated ${migration.hotkeysMoved} shortcut entries.`);
-    }
   }
 
   onunload(): void {
@@ -178,9 +175,13 @@ export default class CimuPrintPlugin extends Plugin {
       menu.addItem((item) => item
         .setTitle(target instanceof TFile ? t('command.printNote') : t('command.printFolder'))
         .setIcon('printer')
-        .onClick(() => target instanceof TFile
-          ? void this.printCurrentNote(target)
-          : void this.printFolder(target as TFolder)));
+        .onClick(() => {
+          if (target instanceof TFile) {
+            void this.printCurrentNote(target);
+          } else if (target instanceof TFolder) {
+            void this.printFolder(target);
+          }
+        }));
     }));
     this.registerEvent(this.app.workspace.on('editor-menu', (menu) => {
       menu.addItem((item) => item.setTitle(t('command.printNote')).setIcon('printer')
@@ -257,7 +258,7 @@ export default class CimuPrintPlugin extends Plugin {
   }
 
   private async createFolderContent(files: TFile[]): Promise<HTMLElement> {
-    const container = document.createElement('div');
+    const container = createDiv();
     for (const file of files) {
       const printable = await this.createFileContent(file);
       if (!printable) {
@@ -315,11 +316,7 @@ export default class CimuPrintPlugin extends Plugin {
   }
 
   private activeFileView(): FileView | null {
-    const workspace = this.app.workspace as typeof this.app.workspace & {
-      getActiveFileView?: () => FileView | null;
-      activeLeaf?: { view?: FileView };
-    };
-    return workspace.getActiveFileView?.() ?? workspace.activeLeaf?.view ?? null;
+    return this.app.workspace.getMostRecentLeaf()?.view ?? null;
   }
 
   private compareFolderFiles(folder: TFolder, left: TFile, right: TFile): number {
@@ -356,7 +353,6 @@ export default class CimuPrintPlugin extends Plugin {
           print: (request) => this.enqueueCliPrint(request)
         }
       );
-      console.info(`Cimu Print local CLI ready at ${this.localCliServer.descriptorPath}`);
     } catch (error) {
       console.warn('Cimu Print local CLI startup failed:', error);
     }
@@ -478,10 +474,10 @@ function findPrinterOption(
 }
 
 function mergeSettings(stored: Partial<CimuPrintSettings> | null): CimuPrintSettings {
-  const legacy = stored as Partial<CimuPrintSettings> & {
+  const legacy: (Partial<CimuPrintSettings> & {
     extraClasses?: boolean;
     normalizeStyle?: boolean;
-  } | null;
+  }) | null = stored;
   const merged = {
     ...DEFAULT_SETTINGS,
     ...stored,

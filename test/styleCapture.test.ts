@@ -46,11 +46,13 @@ describe('Obsidian appearance capture', () => {
 
     try {
       const css = getTargetedRuntimePrintCss(root);
-      const html = createDebugPrintHtml(root, css, 'Theme test');
+      const html = createDebugPrintHtml(root, 'Theme test');
       expect(css).toContain('body.theme-light.anp-theme .markdown-rendered h1');
       expect(css).not.toContain('body.theme-dark.anp-theme .markdown-rendered h1');
       expect(html).toContain('<html class="mod-macos anp-theme theme-light">');
       expect(html).toContain('class="cimu-print-host workspace anp-theme theme-light"');
+      expect(html).not.toContain('<link');
+      expect(html).not.toContain('<style>');
     } finally {
       style.remove();
       document.documentElement.className = previousHtml;

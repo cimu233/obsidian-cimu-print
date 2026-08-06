@@ -12,6 +12,15 @@ import { buildPrintableProperties } from './propertiesBlock';
 
 let diagramSequence = 0;
 
+interface MermaidRenderResult {
+  svg: string;
+  bindFunctions?: (container: Element) => void;
+}
+
+interface MermaidApi {
+  render: (id: string, source: string) => MermaidRenderResult | string | Promise<MermaidRenderResult | string>;
+}
+
 export async function renderMarkdownSource(
   input: TFile | string,
   title: string | false,
@@ -19,8 +28,10 @@ export async function renderMarkdownSource(
   includeProperties = false,
   sourceFile?: TFile
 ): Promise<HTMLElement | null> {
-  const root = document.createElement('article');
+  const root = createEl('article');
   root.className = 'cimu-print-document markdown-rendered';
+  const renderComponent = new Component();
+  renderComponent.load();
 
   try {
     if (includeProperties && input instanceof TFile) {
@@ -31,7 +42,7 @@ export async function renderMarkdownSource(
     }
 
     if (title) {
-      const heading = document.createElement('h1');
+      const heading = createEl('h1');
       heading.textContent = title;
       root.appendChild(heading);
     }
@@ -41,7 +52,7 @@ export async function renderMarkdownSource(
       : input;
     const sourcePath = input instanceof TFile ? input.path : sourceFile?.path ?? '';
 
-    await MarkdownRenderer.render(app, markdown, root, sourcePath, new Component());
+    await MarkdownRenderer.render(app, markdown, root, sourcePath, renderComponent);
     root.querySelectorAll('.metadata-container').forEach((node) => node.remove());
     await replaceMermaidCode(root);
     return root;
@@ -49,6 +60,8 @@ export async function renderMarkdownSource(
     console.error('Cimu Print markdown rendering failed:', error);
     new Notice(t('notice.previewGenerationFailed'));
     return null;
+  } finally {
+    renderComponent.unload();
   }
 }
 
@@ -69,7 +82,11 @@ async function replaceMermaidCode(root: HTMLElement): Promise<void> {
   }
 
   try {
-    const mermaid = await loadMermaid();
+    const loadedMermaid: unknown = await loadMermaid();
+    if (!isMermaidApi(loadedMermaid)) {
+      return;
+    }
+    const mermaid = loadedMermaid;
     for (const code of blocks) {
       const source = code.textContent?.trim();
       const pre = code.closest('pre');
@@ -81,9 +98,14 @@ async function replaceMermaidCode(root: HTMLElement): Promise<void> {
       if (!svg) {
         continue;
       }
-      const container = document.createElement('div');
+      const parsedSvg = new DOMParser().parseFromString(svg, 'image/svg+xml');
+      const svgElement = parsedSvg.documentElement;
+      if (svgElement.nodeName.toLowerCase() !== 'svg') {
+        continue;
+      }
+      const container = createDiv();
       container.className = 'mermaid cimu-print-diagram';
-      container.innerHTML = svg;
+      container.appendChild(document.importNode(svgElement, true));
       if (typeof rendered !== 'string' && typeof rendered?.bindFunctions === 'function') {
         rendered.bindFunctions(container);
       }
@@ -92,4 +114,9 @@ async function replaceMermaidCode(root: HTMLElement): Promise<void> {
   } catch (error) {
     console.error('Cimu Print Mermaid rendering failed:', error);
   }
+}
+
+function isMermaidApi(value: unknown): value is MermaidApi {
+  return value !== null && typeof value === 'object'
+    && 'render' in value && typeof value.render === 'function';
 }

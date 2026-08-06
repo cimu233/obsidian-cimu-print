@@ -8,6 +8,7 @@ interface PdfBrowserWindowLike {
     isDestroyed?: () => boolean;
     webContents: {
         executeJavaScript?: (code: string) => Promise<unknown>;
+        insertCSS: (css: string) => Promise<string>;
         printToPDF: (options: Record<string, unknown>) => Promise<Uint8Array>;
     };
 }
@@ -53,7 +54,6 @@ export async function createPrintPdfData(
     try {
         const html = createDebugPrintHtml(
             content,
-            cssText,
             title,
             bodyClasses,
             includeThemeStyles
@@ -62,6 +62,7 @@ export async function createPrintPdfData(
         await Promise.resolve(
             printWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
         );
+        await printWindow.webContents.insertCSS(cssText);
         await waitForPrintAssets(printWindow);
 
         return await printWindow.webContents.printToPDF(buildPrintToPdfOptions(settings));

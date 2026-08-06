@@ -62,7 +62,8 @@ export function installNativePdfFilenameHook(
             }
         }
 
-        return original.apply(dialog, args);
+        const result: unknown = original.call(dialog, ...args);
+        return Promise.resolve(result);
     };
 
     dialog.showSaveDialog = wrapped;

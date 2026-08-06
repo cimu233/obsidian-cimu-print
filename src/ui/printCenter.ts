@@ -381,7 +381,7 @@ export class PrintCenterModal extends Modal {
             const value = Math.max(minimum, Math.min(maximum, Number.isFinite(parsed) ? parsed : minimum));
             numberInput.value = String(value);
             rangeInput.value = String(value);
-            this.plugin.settings[key] = value as CimuPrintSettings[K];
+            this.plugin.settings[key] = value;
             if (key === 'previewZoomPercent' && this.plugin.settings.previewFitToWidth) {
                 this.plugin.settings.previewFitToWidth = false;
                 const fitToggle = container.querySelector<HTMLInputElement>(

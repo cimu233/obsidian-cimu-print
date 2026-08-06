@@ -15,7 +15,6 @@
   "license": "AGPL-3.0-only",
   "devDependencies": {
     "@types/node": "^24.12.2",
-    "builtin-modules": "^3.3.0",
     "esbuild": "^0.28.0",
     "jsdom": "^29.1.1",
     "obsidian": "^1.12.3",

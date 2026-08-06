@@ -40,6 +40,9 @@ interface PreviewState {
 
 interface PreviewWindow extends Window {
     IntersectionObserver?: typeof IntersectionObserver;
+    createDiv: typeof createDiv;
+    createEl: typeof createEl;
+    createSpan: typeof createSpan;
 }
 
 const previewStates = new WeakMap<HTMLIFrameElement, PreviewState>();
@@ -132,9 +135,10 @@ export function renderEmptyPrintPreview(frame: HTMLIFrameElement, message: strin
         return;
     }
 
-    doc.open();
-    doc.write(`<!doctype html><html><body style="margin:0;background:#d4d7db;color:#596170;font:14px sans-serif;display:grid;place-items:center;height:100vh"><p>${escapeHtml(message)}</p></body></html>`);
-    doc.close();
+    replaceDocumentHtml(
+        doc,
+        `<!doctype html><html><body style="margin:0;background:#d4d7db;color:#596170;font:14px sans-serif;display:grid;place-items:center;height:100vh"><p>${escapeHtml(message)}</p></body></html>`
+    );
 }
 
 export function buildPdfCanvasShell(title: string): string {
@@ -214,7 +218,8 @@ async function preparePreviewPages(
         throw new Error('The PDF preview document is unavailable.');
     }
 
-    const pagesElement = doc.createElement('div');
+    const docWindow = doc.win as PreviewWindow;
+    const pagesElement = docWindow.createDiv();
     pagesElement.id = 'pages';
 
     const firstPage = await pdfDocument.getPage(1);
@@ -228,7 +233,7 @@ async function preparePreviewPages(
     const viewport = firstPage.getViewport({ scale: previewScale });
 
     for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber += 1) {
-        const container = doc.createElement('section');
+        const container = docWindow.createEl('section');
         container.className = 'pdf-page';
         container.style.width = `${Math.round(viewport.width)}px`;
         container.style.height = `${Math.round(viewport.height)}px`;
@@ -236,7 +241,7 @@ async function preparePreviewPages(
         pagesElement.appendChild(container);
 
         if (settings.previewShowPageNumbers) {
-            const label = doc.createElement('span');
+            const label = docWindow.createSpan();
             label.className = 'pdf-page-number';
             label.textContent = `${pageNumber} / ${pdfDocument.numPages}`;
             container.appendChild(label);
@@ -313,7 +318,8 @@ function activateDeferredPageRendering(
     settings: CimuPrintSettings,
     isCurrent: () => boolean
 ): void {
-    const Observer = (frame.contentWindow as PreviewWindow | null)?.IntersectionObserver;
+    const contentWindow = frame.contentWindow as PreviewWindow | null;
+    const Observer = contentWindow?.IntersectionObserver;
     if (Observer) {
         state.observer = new Observer((entries: IntersectionObserverEntry[]) => {
             entries.forEach((entry: IntersectionObserverEntry) => {
@@ -375,7 +381,7 @@ async function renderPage(
 
         const viewport = page.getViewport({ scale: previewScale });
         const outputScale = Math.min(2, frame.contentWindow?.devicePixelRatio || 1);
-        const canvas = frame.contentDocument!.createElement('canvas');
+        const canvas = (frame.contentDocument!.win as PreviewWindow).createEl('canvas');
         const context = canvas.getContext('2d', { alpha: false });
         if (!context) {
             throw new Error('Canvas rendering is unavailable.');
@@ -435,9 +441,12 @@ function writePreviewShell(frame: HTMLIFrameElement, title: string): void {
     if (!doc) {
         throw new Error('The preview frame is unavailable.');
     }
-    doc.open();
-    doc.write(buildPdfCanvasShell(title));
-    doc.close();
+    replaceDocumentHtml(doc, buildPdfCanvasShell(title));
+}
+
+function replaceDocumentHtml(target: Document, html: string): void {
+    const parsed = new DOMParser().parseFromString(html, 'text/html');
+    target.replaceChild(target.importNode(parsed.documentElement, true), target.documentElement);
 }
 
 function configurePdfWorker(): void {

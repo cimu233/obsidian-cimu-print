@@ -1,6 +1,6 @@
 import esbuild from 'esbuild';
-import builtins from 'builtin-modules';
 import fs from 'node:fs/promises';
+import { builtinModules } from 'node:module';
 
 const rawTextImports = {
   name: 'cimu-raw-text',
@@ -23,7 +23,7 @@ const production = process.argv[2] === 'production';
 const context = await esbuild.context({
   entryPoints: ['src/main.ts'],
   bundle: true,
-  external: ['obsidian', 'electron', '@codemirror/state', '@codemirror/view', 'node:*', ...builtins],
+  external: ['obsidian', 'electron', '@codemirror/state', '@codemirror/view', 'node:*', ...builtinModules],
   format: 'cjs',
   target: 'es2018',
   platform: 'browser',

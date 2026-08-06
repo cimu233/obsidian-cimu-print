@@ -19,7 +19,7 @@ export async function executePrintJob(
   const css = [baseCss, runtimeCss].filter((part) => part.trim()).join('\n');
 
   if (settings.debugMode) {
-    openDebugWindow(createDebugPrintHtml(content, css, title, bodyClasses, styled));
+    openDebugWindow(createDebugPrintHtml(content, title, bodyClasses, styled), css);
   }
 
   return printWithSystemPrinter(title, content, settings, css, job, bodyClasses);

@@ -4,6 +4,9 @@ import { t } from '../i18n';
 interface DebugWindow {
   loadURL: (url: string) => Promise<void> | void;
   show: () => void;
+  webContents: {
+    insertCSS: (css: string) => Promise<string>;
+  };
 }
 
 interface ElectronWindow extends Window {
@@ -12,7 +15,7 @@ interface ElectronWindow extends Window {
   };
 }
 
-export function openDebugWindow(html: string): void {
+export function openDebugWindow(html: string, css: string): void {
   if (!Platform.isDesktopApp) {
     new Notice(t('notice.debugDesktopOnly'));
     return;
@@ -34,7 +37,10 @@ export function openDebugWindow(html: string): void {
     });
     void Promise.resolve(debugWindow.loadURL(
       `data:text/html;charset=utf-8,${encodeURIComponent(html)}`
-    )).then(() => debugWindow.show());
+    )).then(async () => {
+      await debugWindow.webContents.insertCSS(css);
+      debugWindow.show();
+    });
   } catch (error) {
     console.error('Cimu Print debug window failed:', error);
     new Notice(t('notice.debugFailed'));

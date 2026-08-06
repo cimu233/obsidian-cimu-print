@@ -78,9 +78,12 @@ export function sanitizePdfFilename(title: string, fallback: string): string {
     };
 
     const cleaned = Array.from(title.normalize('NFC'))
+        .filter((character) => {
+            const codePoint = character.codePointAt(0) ?? 0;
+            return codePoint > 0x1f && codePoint !== 0x7f;
+        })
         .map((character) => replacements[character] ?? character)
         .join('')
-        .replace(/[\u0000-\u001F\u007F]/g, '')
         .replace(/\s+/g, ' ')
         .trim()
         .replace(/[. ]+$/g, '');
@@ -101,7 +104,7 @@ function cleanHeadingText(value: string): string {
         .replace(/\[\[([^\]]+)\]\]/g, '$1')
         .replace(/<[^>]+>/g, '')
         .replace(/[`*_~]/g, '')
-        .replace(/\\([#\[\]()`*_{}<>])/g, '$1')
+        .replace(/\\([#[\]()`*_{}<>])/g, '$1')
         .replace(/\s+/g, ' ')
         .trim();
 }

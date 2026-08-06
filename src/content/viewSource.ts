@@ -35,15 +35,15 @@ export function capturePrintableView(
     return null;
   }
 
-  const output = document.createElement('div');
+  const output = createDiv();
   leadingNodes.forEach((node) => output.appendChild(node));
   if (title) {
-    const heading = document.createElement('h1');
+    const heading = createEl('h1');
     heading.textContent = title;
     output.appendChild(heading);
   }
 
-  const wrapper = document.createElement('article');
+  const wrapper = createEl('article');
   wrapper.className = 'cimu-print-document cimu-print-view';
   const clone = source.cloneNode(true) as HTMLElement;
   clone.querySelectorAll(INTERFACE_SELECTORS.join(',')).forEach((node) => node.remove());
