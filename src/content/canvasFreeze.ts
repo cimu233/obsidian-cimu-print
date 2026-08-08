@@ -1,7 +1,3 @@
-interface ObsidianDomWindow extends Window {
-    createEl: typeof createEl;
-}
-
 export function freezeCanvasPixels(source: HTMLElement, clone: HTMLElement): void {
     const sourceCanvases = [
         ...(source.instanceOf(HTMLCanvasElement) ? [source] : []),
@@ -28,7 +24,7 @@ function replaceWithSnapshot(source: HTMLCanvasElement, target: HTMLCanvasElemen
         return;
     }
 
-    const image = (target.ownerDocument.win as ObsidianDomWindow).createEl('img');
+    const image = target.ownerDocument.createElement('img');
     for (const attribute of Array.from(source.attributes)) {
         image.setAttribute(attribute.name, attribute.value);
     }

@@ -40,9 +40,6 @@ interface PreviewState {
 
 interface PreviewWindow extends Window {
     IntersectionObserver?: typeof IntersectionObserver;
-    createDiv: typeof createDiv;
-    createEl: typeof createEl;
-    createSpan: typeof createSpan;
 }
 
 const previewStates = new WeakMap<HTMLIFrameElement, PreviewState>();
@@ -218,8 +215,7 @@ async function preparePreviewPages(
         throw new Error('The PDF preview document is unavailable.');
     }
 
-    const docWindow = doc.win as PreviewWindow;
-    const pagesElement = docWindow.createDiv();
+    const pagesElement = doc.createElement('div');
     pagesElement.id = 'pages';
 
     const firstPage = await pdfDocument.getPage(1);
@@ -233,7 +229,7 @@ async function preparePreviewPages(
     const viewport = firstPage.getViewport({ scale: previewScale });
 
     for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber += 1) {
-        const container = docWindow.createEl('section');
+        const container = doc.createElement('section');
         container.className = 'pdf-page';
         container.style.width = `${Math.round(viewport.width)}px`;
         container.style.height = `${Math.round(viewport.height)}px`;
@@ -241,7 +237,7 @@ async function preparePreviewPages(
         pagesElement.appendChild(container);
 
         if (settings.previewShowPageNumbers) {
-            const label = docWindow.createSpan();
+            const label = doc.createElement('span');
             label.className = 'pdf-page-number';
             label.textContent = `${pageNumber} / ${pdfDocument.numPages}`;
             container.appendChild(label);
@@ -381,7 +377,7 @@ async function renderPage(
 
         const viewport = page.getViewport({ scale: previewScale });
         const outputScale = Math.min(2, frame.contentWindow?.devicePixelRatio || 1);
-        const canvas = (frame.contentDocument!.win as PreviewWindow).createEl('canvas');
+        const canvas = frame.contentDocument!.createElement('canvas');
         const context = canvas.getContext('2d', { alpha: false });
         if (!context) {
             throw new Error('Canvas rendering is unavailable.');

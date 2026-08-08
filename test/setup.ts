@@ -32,12 +32,6 @@ Object.defineProperties(Window.prototype, {
     }
   }
 });
-Object.defineProperty(Document.prototype, 'win', {
-  configurable: true,
-  get(this: Document): Window {
-    return this.defaultView ?? window;
-  }
-});
 Object.defineProperty(Node.prototype, 'instanceOf', {
   configurable: true,
   value<T>(this: Node, type: new () => T): this is Node & T {
