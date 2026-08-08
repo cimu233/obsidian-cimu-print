@@ -18,7 +18,47 @@ describe('settings definitions', () => {
     expect(names).toContain('Font size');
     expect(names).toContain('Print PDF folder');
   });
+
+  it('uses the modern refresh hook when Obsidian provides it', () => {
+    const tab = createTab();
+    let modernCalls = 0;
+    let legacyCalls = 0;
+    Object.defineProperties(tab, {
+      update: { configurable: true, value: () => modernCalls += 1 },
+      display: { configurable: true, value: () => legacyCalls += 1 }
+    });
+
+    refresh(tab);
+
+    expect(modernCalls).toBe(1);
+    expect(legacyCalls).toBe(0);
+  });
+
+  it('falls back to the legacy refresh hook on older Obsidian versions', () => {
+    const tab = createTab();
+    let legacyCalls = 0;
+    Object.defineProperties(tab, {
+      update: { configurable: true, value: undefined },
+      display: { configurable: true, value: () => legacyCalls += 1 }
+    });
+
+    refresh(tab);
+
+    expect(legacyCalls).toBe(1);
+  });
 });
+
+function createTab(): CimuPrintSettingTab {
+  const owner = {
+    settings: { ...DEFAULT_SETTINGS },
+    saveSettings: async () => undefined
+  } as CimuPrintPlugin;
+  return new CimuPrintSettingTab({} as App, owner);
+}
+
+function refresh(tab: CimuPrintSettingTab): void {
+  (tab as unknown as { refreshSettings(): void }).refreshSettings();
+}
 
 function collectNames(items: SettingDefinitionItem[]): string[] {
   return items.flatMap((item) => {

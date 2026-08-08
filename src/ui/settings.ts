@@ -399,11 +399,15 @@ export class CimuPrintSettingTab extends PluginSettingTab {
   }
 
   private refreshSettings(): void {
-    if (typeof this.update === 'function') {
-      this.update();
+    const modernRefresh: unknown = Reflect.get(this, 'update');
+    if (typeof modernRefresh === 'function') {
+      Reflect.apply(modernRefresh, this, []);
       return;
     }
-    this.display();
+    const legacyRefresh: unknown = Reflect.get(this, 'display');
+    if (typeof legacyRefresh === 'function') {
+      Reflect.apply(legacyRefresh, this, []);
+    }
   }
 }
 
