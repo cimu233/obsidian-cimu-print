@@ -1,6 +1,6 @@
 {
   "name": "obsidian-cimu-print",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Independent print center for Obsidian",
   "main": "main.js",
   "bin": {
