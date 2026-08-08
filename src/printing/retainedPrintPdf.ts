@@ -2,6 +2,7 @@ import { Platform } from 'obsidian';
 import { CimuPrintSettings } from '../types';
 import { sanitizePdfFilename } from './documentTitle';
 import { getPdfPageCount } from './pdfPrintPages';
+import { getDefaultPrintHandoffDirectory } from './printHandoffDirectory';
 import { createPrintPdfData } from './printPdf';
 
 interface FileStatLike {
@@ -17,6 +18,7 @@ interface NodeFsLike {
             data: Uint8Array,
             options: { flag: 'wx' }
         ) => Promise<void>;
+        mkdir?: (path: string, options: { recursive: true }) => Promise<unknown>;
         lstat?: (path: string) => Promise<FileStatLike>;
         unlink?: (path: string) => Promise<void>;
     };
@@ -86,7 +88,15 @@ export async function prepareRetainedPrintPdf(
         throw new Error('PDF file services are unavailable.');
     }
 
-    const outputDirectory = settings.printHandoffDirectory.trim() || os.tmpdir();
+    const configuredDirectory = settings.printHandoffDirectory.trim();
+    const defaultDirectory = getDefaultPrintHandoffDirectory();
+    const outputDirectory = configuredDirectory || defaultDirectory || os.tmpdir();
+    if (!configuredDirectory && defaultDirectory) {
+        if (!fileSystem.promises.mkdir) {
+            throw new Error('PDF directory creation is unavailable.');
+        }
+        await fileSystem.promises.mkdir(outputDirectory, { recursive: true });
+    }
     const directoryStat = await fileSystem.promises.stat(outputDirectory);
     if (!directoryStat.isDirectory()) {
         throw new PrintPdfDirectoryError(outputDirectory);
@@ -173,10 +183,15 @@ export async function cleanupTrackedTemporaryPrintPdfs(
         return result;
     }
 
-    const temporaryDirectory = path.resolve(os.tmpdir());
+    const safeTemporaryDirectories = new Set([
+        path.resolve(os.tmpdir()),
+        getDefaultPrintHandoffDirectory()
+            ? path.resolve(getDefaultPrintHandoffDirectory())
+            : ''
+    ].filter(Boolean));
     for (const trackedPath of trackedPaths) {
         const candidatePath = path.resolve(trackedPath);
-        const isSafeCandidate = path.dirname(candidatePath) === temporaryDirectory
+        const isSafeCandidate = safeTemporaryDirectories.has(path.dirname(candidatePath))
             && path.extname(candidatePath).toLowerCase() === '.pdf';
         if (!isSafeCandidate) {
             continue;

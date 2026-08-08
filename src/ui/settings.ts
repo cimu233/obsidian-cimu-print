@@ -1,7 +1,10 @@
 import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
 import type CimuPrintPlugin from '../main';
 import { setPrintLanguage, t } from '../i18n';
-import { choosePrintHandoffDirectory, getSystemPrintDirectory } from '../printing/printHandoffDirectory';
+import {
+  choosePrintHandoffDirectory,
+  getDefaultPrintHandoffDirectory
+} from '../printing/printHandoffDirectory';
 import { PRINT_FONT_SUGGESTIONS } from '../printing/printFonts';
 import { CimuPrintSettings, PrintLanguage } from '../types';
 
@@ -199,7 +202,9 @@ export class CimuPrintSettingTab extends PluginSettingTab {
 
   private printDirectory(root: HTMLElement): void {
     const configured = this.owner.settings.printHandoffDirectory.trim();
-    const effective = configured || getSystemPrintDirectory() || t('settings.systemTempFolder');
+    const effective = configured
+      || getDefaultPrintHandoffDirectory()
+      || t('settings.systemTempFolder');
     new Setting(root)
       .setName(t('settings.printHandoffDirectory'))
       .setDesc(`${t('settings.printHandoffDirectoryDesc')} ${t('settings.printHandoffCurrent', { path: effective })}`)

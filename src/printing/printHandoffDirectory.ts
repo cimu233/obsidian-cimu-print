@@ -21,6 +21,16 @@ interface ElectronCapableWindow extends Window {
     require?: (moduleName: string) => unknown;
 }
 
+let defaultPrintHandoffDirectory = '';
+
+export function setDefaultPrintHandoffDirectory(directory: string): void {
+    defaultPrintHandoffDirectory = directory.trim();
+}
+
+export function getDefaultPrintHandoffDirectory(): string {
+    return defaultPrintHandoffDirectory;
+}
+
 export function getSystemPrintDirectory(): string {
     const requireModule = (window as ElectronCapableWindow).require;
     if (!Platform.isDesktopApp || typeof requireModule !== 'function') {
@@ -48,7 +58,10 @@ export async function choosePrintHandoffDirectory(
 
     const result = await dialog.showOpenDialog({
         title: dialogTitle,
-        defaultPath: currentDirectory || getSystemPrintDirectory() || undefined,
+        defaultPath: currentDirectory
+            || getDefaultPrintHandoffDirectory()
+            || getSystemPrintDirectory()
+            || undefined,
         properties: ['openDirectory', 'createDirectory']
     });
 

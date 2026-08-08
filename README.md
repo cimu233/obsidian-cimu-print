@@ -64,9 +64,9 @@ The source plugin folder remains untouched by the migration.
 ## Temporary PDFs
 
 - In-memory printing is enabled by default on supported systems.
-- File-based fallback uses the displayed temporary or custom directory.
+- File-based fallback uses `.obsidian/plugins/cimu-print/.temp` inside the current vault by default, or a custom directory selected by the user.
 - Automatic cleanup is disabled by default.
-- Optional cleanup handles only plugin-tracked regular PDF files directly inside the system temporary directory.
+- Optional cleanup handles only plugin-tracked regular PDF files directly inside the default temporary directory. During migration, previously tracked files directly inside the operating system temporary directory are also eligible for cleanup.
 - Files in a custom directory are always retained.
 
 ## Development

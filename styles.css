@@ -242,6 +242,6 @@
   .cimu-print-document blockquote,
   .cimu-print-document table,
   .cimu-print-document .callout {
-    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }

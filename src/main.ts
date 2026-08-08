@@ -20,6 +20,7 @@ import { executePrintJob } from './printing/printJob';
 import { exportPrintPdf } from './printing/exportPdf';
 import { generatePrintStyles } from './printing/printStyles';
 import { installNativePdfFilenameHook } from './printing/nativePdfFilename';
+import { setDefaultPrintHandoffDirectory } from './printing/printHandoffDirectory';
 import {
   getSystemPrinterCapabilities,
   listSystemPrinters,
@@ -53,6 +54,8 @@ export default class CimuPrintPlugin extends Plugin {
   private cliPrintQueue: Promise<void> = Promise.resolve();
 
   async onload(): Promise<void> {
+    const pluginDirectory = this.getPluginDirectory();
+    setDefaultPrintHandoffDirectory(pluginDirectory ? join(pluginDirectory, '.temp') : '');
     const stored = await this.loadData() as Partial<CimuPrintSettings> | null;
     this.settings = mergeSettings(stored);
     await migrateLegacyPrintState(
@@ -73,6 +76,7 @@ export default class CimuPrintPlugin extends Plugin {
   }
 
   onunload(): void {
+    setDefaultPrintHandoffDirectory('');
     this.removeNativeDialogHook?.();
     this.removeNativeDialogHook = null;
     const server = this.localCliServer;
@@ -330,6 +334,11 @@ export default class CimuPrintPlugin extends Plugin {
   }
 
   private async startLocalCli(): Promise<void> {
+    const pluginDirectory = this.getPluginDirectory();
+    if (!pluginDirectory) {
+      console.warn('Cimu Print local CLI requires a filesystem-backed vault.');
+      return;
+    }
     const adapter = this.app.vault.adapter as typeof this.app.vault.adapter & {
       getBasePath?: () => string;
     };
@@ -339,10 +348,6 @@ export default class CimuPrintPlugin extends Plugin {
       return;
     }
 
-    const pluginDirectory = join(
-      vaultPath,
-      this.manifest.dir ?? `${this.app.vault.configDir}/plugins/${this.manifest.id}`
-    );
     try {
       this.localCliServer = await startLocalCliServer(
         pluginDirectory,
@@ -356,6 +361,22 @@ export default class CimuPrintPlugin extends Plugin {
     } catch (error) {
       console.warn('Cimu Print local CLI startup failed:', error);
     }
+  }
+
+  private getPluginDirectory(): string | null {
+    const adapter = this.app.vault.adapter as typeof this.app.vault.adapter & {
+      getBasePath?: () => string;
+    };
+    const vaultPath = adapter.getBasePath?.();
+    if (!vaultPath) {
+      console.warn('Cimu Print local CLI requires a filesystem-backed vault.');
+      return null;
+    }
+
+    return join(
+      vaultPath,
+      this.manifest.dir ?? `${this.app.vault.configDir}/plugins/${this.manifest.id}`
+    );
   }
 
   private enqueueCliPrint(request: CliPrintRequest): Promise<CliPrintResult> {

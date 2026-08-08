@@ -107,14 +107,14 @@ const EN = {
     'settings.memoryPrint': 'Prefer in-memory printing',
     'settings.memoryPrintDesc': 'On supported systems, stream the verified PDF directly to the print queue without creating a plugin-side temporary file.',
     'settings.cleanupTemporaryPdfs': 'Clean previous temporary PDFs before printing',
-    'settings.cleanupTemporaryPdfsDesc': 'Remove only plugin-tracked PDF files from the system temporary folder. Files in a custom folder are always kept.',
+    'settings.cleanupTemporaryPdfsDesc': 'Remove only plugin-tracked PDF files from the default vault temporary folder. Files in a custom folder are always kept.',
     'settings.printHandoffDirectory': 'Print PDF folder',
-    'settings.printHandoffDirectoryDesc': 'Used when file-based printing or the default PDF app is required. Leave empty to use the system temporary folder.',
+    'settings.printHandoffDirectoryDesc': 'Used when file-based printing or the default PDF app is required. Leave empty to use the plugin\'s hidden temporary folder inside this vault.',
     'settings.printHandoffCurrent': 'Current folder: {{path}}',
     'settings.printHandoffChoose': 'Choose...',
-    'settings.printHandoffReset': 'Use system temporary folder',
+    'settings.printHandoffReset': 'Use default temporary folder',
     'settings.printFolderPickerTitle': 'Select print PDF folder',
-    'settings.systemTempFolder': 'System temporary folder',
+    'settings.systemTempFolder': 'Vault plugin temporary folder',
     'settings.refreshDelay': 'Preview refresh delay',
     'settings.refreshDelayDesc': 'Wait briefly after editing before recalculating pages.',
     'settings.customCss': 'Custom CSS',
@@ -165,6 +165,11 @@ const ZH_TW: Dictionary = {
     'settings.language': '語言', 'settings.languageDesc': '自動跟隨 Obsidian 或作業系統，也可以手動選擇。', 'settings.defaultOutput': '預設輸出', 'settings.defaultOutputDesc': '保留舊版設定相容性；列印中心會同時顯示兩個輸出按鈕。', 'settings.systemPrinter': '系統印表機', 'settings.pdfFile': 'PDF 檔案', 'settings.nativePdfName': '套用至 Obsidian PDF 導出', 'settings.nativePdfNameDesc': 'Obsidian 原生導出 PDF 時，也使用一級標題作為預設檔名。', 'settings.fontSize': '正文字級', 'settings.fontSizeDesc': '原生 Markdown 的正文字級。', 'settings.headingSize': '{{level}} 級標題字級', 'settings.headingSizeDesc': '原生 Markdown 的 {{level}} 級標題字級。', 'settings.combineFolder': '合併資料夾筆記', 'settings.combineFolderDesc': '合併成一份文件；關閉時每篇筆記另起一頁。', 'settings.printCenter': '列印中心', 'settings.printCenterDesc': '文件與印表機選項會和分頁預覽集中顯示；支援的系統會直接提交校驗後的 PDF。', 'settings.memoryPrint': '優先使用記憶體列印', 'settings.memoryPrintDesc': '支援的系統會將校驗後的 PDF 直接傳入列印佇列，插件不會建立暫存檔案。', 'settings.cleanupTemporaryPdfs': '列印前清理上次暫存 PDF', 'settings.cleanupTemporaryPdfsDesc': '只會移除插件登記且位於系統暫存資料夾的 PDF；自訂資料夾中的檔案會一直保留。', 'settings.printHandoffDirectory': '列印 PDF 資料夾', 'settings.printHandoffDirectoryDesc': '檔案式列印或預設 PDF 應用需要時會使用此資料夾；留空時使用系統暫存資料夾。', 'settings.printHandoffCurrent': '目前資料夾：{{path}}', 'settings.printHandoffChoose': '選擇...', 'settings.printHandoffReset': '使用系統暫存資料夾', 'settings.printFolderPickerTitle': '選擇列印 PDF 資料夾', 'settings.systemTempFolder': '系統暫存資料夾', 'settings.refreshDelay': '預覽更新延遲', 'settings.refreshDelayDesc': '編輯後稍候片刻再重新計算頁面。', 'settings.customCss': '自訂 CSS', 'settings.customCssDesc': '啟用 print.css 片段，加入列印專用外觀。', 'settings.debug': '偵錯模式', 'settings.debugDesc': '開啟產生的列印文件以便檢查。',
     'notice.noNote': '沒有可列印的筆記。', 'notice.noActiveNote': '目前沒有開啟的筆記。', 'notice.noSelection': '尚未選取文字。', 'notice.noFolder': '無法取得資料夾。', 'notice.noMarkdown': '此資料夾內沒有 Markdown 文件。', 'notice.openFile': '請先開啟此檔案，再列印其呈現內容。', 'notice.previewCaptureFailed': '無法取得目前畫面供列印。', 'notice.previewGenerationFailed': '無法產生預覽內容。', 'notice.desktopPdfOnly': '直接導出 PDF 僅支援 Obsidian 桌面版。', 'notice.exportPdfTitle': '導出 PDF', 'notice.pdfSaved': 'PDF 已儲存：{{path}}', 'notice.pdfFailed': 'PDF 導出失敗。', 'notice.printDirectoryInvalid': '列印 PDF 資料夾無法使用：{{path}}', 'notice.pdfAppOpened': '已用預設應用開啟 {{count}} 頁 PDF：{{path}}', 'notice.pdfAppOpenFailed': 'PDF 已保留，預設應用未能開啟：{{path}}', 'notice.pdfHandoffFailed': '無法準備交給預設應用的 PDF。', 'notice.printDirectoryPickerFailed': '無法選擇列印 PDF 資料夾。', 'notice.printFailed': '無法開啟系統列印窗口。', 'notice.printPrepared': '已準備 {{count}} 頁供系統列印。', 'notice.directPrintFallback': '此系統目前無法直接提交 PDF，正在用預設應用開啟保留的 PDF。', 'notice.invalidPageRange': '頁面範圍格式錯誤，或超過產生後的 PDF 頁數。', 'notice.memoryPrintSubmitted': '已從記憶體將 {{count}} 頁 PDF 提交至 {{printer}}，任務編號 {{job}}。插件未建立暫存 PDF。', 'notice.printSubmitted': '已將 {{count}} 頁 PDF 提交至 {{printer}}，任務編號 {{job}}。PDF 保留於：{{path}}', 'notice.printSubmissionFailed': '列印任務未提交。產生的 PDF 保留於：{{path}}', 'notice.noRetainedPdf': '尚未產生 PDF 檔案', 'notice.pluginPathMissing': '找不到插件路徑，已略過預設列印樣式。', 'notice.defaultStylesMissing': '無法載入預設列印樣式。', 'notice.debugDesktopOnly': '偵錯模式僅支援 Obsidian 桌面版。', 'notice.debugFailed': '無法開啟偵錯列印預覽。', 'filename.selectionSuffix': '選段'
 };
+
+ZH_TW['settings.cleanupTemporaryPdfsDesc'] = '只會移除插件登記且位於 Vault 預設暫存資料夾的 PDF；自訂資料夾中的檔案會一直保留。';
+ZH_TW['settings.printHandoffDirectoryDesc'] = '檔案式列印或預設 PDF 應用需要時會使用此資料夾；留空時使用此 Vault 內的插件隱藏暫存資料夾。';
+ZH_TW['settings.printHandoffReset'] = '使用預設暫存資料夾';
+ZH_TW['settings.systemTempFolder'] = 'Vault 插件暫存資料夾';
 
 const ZH_CN: Dictionary = Object.fromEntries(
     Object.entries(ZH_TW).map(([key, value]) => [key, replaceMany(value, [
