@@ -1,11 +1,27 @@
+import { promises as fileSystem } from 'node:fs';
 import { mkdtemp, readFile, stat } from 'node:fs/promises';
+import * as http from 'node:http';
 import { request as httpRequest } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { LocalCliServer, startLocalCliServer } from '../src/cli/localServer';
 
 let server: LocalCliServer | null = null;
+
+beforeAll(() => {
+  Object.defineProperties(window, {
+    process: { configurable: true, value: process },
+    require: {
+      configurable: true,
+      value: (moduleName: string): unknown => {
+        if (moduleName === 'node:http') return http;
+        if (moduleName === 'node:fs') return { promises: fileSystem };
+        throw new Error(`Unexpected test module: ${moduleName}`);
+      }
+    }
+  });
+});
 
 afterEach(async () => {
   await server?.stop();

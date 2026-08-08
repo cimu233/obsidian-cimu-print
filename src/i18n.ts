@@ -171,8 +171,9 @@ ZH_TW['settings.printHandoffDirectoryDesc'] = '檔案式列印或預設 PDF 應�
 ZH_TW['settings.printHandoffReset'] = '使用預設暫存資料夾';
 ZH_TW['settings.systemTempFolder'] = 'Vault 插件暫存資料夾';
 
-const ZH_CN: Dictionary = Object.fromEntries(
-    Object.entries(ZH_TW).map(([key, value]) => [key, replaceMany(value, [
+const ZH_CN: Dictionary = { ...ZH_TW };
+for (const key of Object.keys(ZH_TW) as TranslationKey[]) {
+    ZH_CN[key] = replaceMany(ZH_TW[key], [
         ['列印', '打印'], ['檔案', '文件'], ['檔名', '文件名'], ['資料夾', '文件夹'],
         ['預覽', '预览'], ['預設', '默认'], ['導出', '导出'], ['開啟', '打开'],
         ['關閉', '关闭'], ['無法', '无法'], ['選取', '选中'], ['內容', '内容'],
@@ -182,8 +183,8 @@ const ZH_CN: Dictionary = Object.fromEntries(
         ['載入', '加载'], ['產生', '生成'], ['儲存', '保存'], ['偵錯', '调试'],
         ['僅', '仅'], ['體', '体'], ['動', '动'], ['應用', '应用'], ['暫存', '临时'],
         ['印表機', '打印机'], ['雙面', '双面'], ['範圍', '范围'], ['佇列', '队列'], ['張', '张']
-    ])])
-) as Dictionary;
+    ]);
+}
 
 const DICTIONARIES: Record<Exclude<PrintLanguage, 'auto'>, Dictionary> = {
     en: EN,

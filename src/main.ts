@@ -1,4 +1,3 @@
-import { join } from 'node:path';
 import { MarkdownView, normalizePath, Notice, Plugin, TFile, TFolder } from 'obsidian';
 import { LocalCliServer, startLocalCliServer } from './cli/localServer';
 import {
@@ -30,6 +29,7 @@ import {
 import { CimuPrintSettings, DEFAULT_SETTINGS, DocumentTitleSource } from './types';
 import { PrintCenterDocument, PrintCenterModal } from './ui/printCenter';
 import { CimuPrintSettingTab } from './ui/settings';
+import { joinSystemPath } from './platform/systemPath';
 
 const titleSorter = new Intl.Collator(undefined, {
   numeric: true,
@@ -55,7 +55,7 @@ export default class CimuPrintPlugin extends Plugin {
 
   async onload(): Promise<void> {
     const pluginDirectory = this.getPluginDirectory();
-    setDefaultPrintHandoffDirectory(pluginDirectory ? join(pluginDirectory, '.temp') : '');
+    setDefaultPrintHandoffDirectory(pluginDirectory ? joinSystemPath(pluginDirectory, '.temp') : '');
     const stored = await this.loadData() as Partial<CimuPrintSettings> | null;
     this.settings = mergeSettings(stored);
     await migrateLegacyPrintState(
@@ -373,7 +373,7 @@ export default class CimuPrintPlugin extends Plugin {
       return null;
     }
 
-    return join(
+    return joinSystemPath(
       vaultPath,
       this.manifest.dir ?? `${this.app.vault.configDir}/plugins/${this.manifest.id}`
     );
